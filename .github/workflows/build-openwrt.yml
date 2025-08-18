@@ -1,0 +1,54 @@
+name: Build OpenWrt X86
+
+# 触发条件：手动触发 或 推送到 main 分支
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    # 使用你自托管的 WSL Ubuntu Runner
+    runs-on: [self-hosted, Linux, X64]
+
+    steps:
+      # 1. 检出仓库源码
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. 安装依赖（确保 WSL Ubuntu 有 curl, make, gcc 等）
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential libncurses5-dev gawk git unzip wget ccache subversion python3-distutils
+
+      # 3. 更新 OpenWrt feeds
+      - name: Update feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      # 4. 加载自定义配置
+      - name: Load custom config
+        run: |
+          if [ -f .config ]; then
+            echo "Using existing .config"
+          else
+            echo "No .config found! Exiting."
+            exit 1
+          fi
+
+      # 5. 编译固件
+      - name: Build OpenWrt
+        run: |
+          make defconfig
+          make -j$(nproc) V=s
+
+      # 6. 上传编译好的固件到 GitHub Artifacts
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenWrt-x86_64
+          path: bin/targets/x86/64/*
+          retention-days: 14
