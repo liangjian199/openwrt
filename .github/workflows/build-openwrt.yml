@@ -33,9 +33,10 @@ jobs:
           make -j$(nproc) V=s
         # 编译固件（多线程加速）
 
-- name: Upload artifact
-  uses: actions/upload-artifact@v4
-  with:
-    name: OpenWrt-x86_64
-    path: bin/targets/x86/64/*
-    retention-days: 90  
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenWrt-x86_64
+          path: bin/targets/x86/64/*
+          retention-days: 14
+        # 上传编译结果到 GitHub Actions 的 Artifacts
